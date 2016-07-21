@@ -5,12 +5,14 @@ wrk.method = "GET"
  
 done = function(summary, latency, requests)
  
-        filename = "stats.cvs"
+        filename = "results.csv"
+        title = os.getenv("TESTEE")
         file = assert(io.open(filename, "a"))
         file.write(
             file,
             string.format(
-                "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%d\n",
+                "%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%d,%d\n",
+                title,
                 latency.min / 1000,
                 latency:percentile(50) / 1000,
                 latency:percentile(75) / 1000,

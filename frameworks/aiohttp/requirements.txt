@@ -1,7 +1,10 @@
-Cython
-aiohttp         == 0.15.3
-aiohttp_jinja2
-aiopg
-gunicorn
-peewee-async
+Cython              >= 0.24
+
+aiohttp             == 0.21.6
+aiohttp_jinja2      == 0.7.0
+aiopg               == 0.9.2
+peewee-async        == 0.5.3
+
 psycopg2
+
+gunicorn            >= 19.5.0

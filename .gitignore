@@ -1,3 +1,10 @@
-/todo.txt
-/index.html
+/.ropeproject
+/.cache
+/.env
+/.vagrant
 /aws.ini
+/index.html
+/results.csv
+/todo.txt
+__pycache__
+*~
