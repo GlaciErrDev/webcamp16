@@ -7,7 +7,7 @@ from playhouse.db_url import connect
 
 HOST = os.environ.get('DHOST', '127.0.0.1')
 
-PEEWEE_CONNECTION = 'postgres+pool://benchmark:benchmark@%s:5432/benchmark' % HOST
+PEEWEE_CONNECTION = 'postgres+pool://frameworksbench:frameworksbench@%s:5432/benchmark' % HOST
 db = connect(PEEWEE_CONNECTION)
 db.connect()
 
