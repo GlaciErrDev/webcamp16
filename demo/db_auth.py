@@ -14,9 +14,9 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
     @asyncio.coroutine
     def authorized_userid(self, identity):
         with (yield from self.dbengine) as conn:
-            where = [db.users.c.login == identity,
-                     not db.users.c.disabled]
-            query = db.users.count().where(sa.and_(*where))
+            where = sa.and_(db.users.c.login == identity,
+                            sa.not_(db.users.c.disabled))
+            query = db.users.count().where(where)
             ret = yield from conn.scalar(query)
             if ret:
                 return identity
@@ -25,13 +25,27 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
 
     @asyncio.coroutine
     def permits(self, identity, permission, context=None):
-        # import pdb; pdb.set_trace()
-        with (yield from self.dbengine) as conn:
-            import pdb; pdb.set_trace()
+        if identity is None:
+            return False
 
-            query = db.users.select()
-            ret = yield from conn.scalar(query)
-            if ret is not None:
-                if permission in ret:
+        with (yield from self.dbengine) as conn:
+            where = sa.and_(db.users.c.login == identity,
+                            sa.not_(db.users.c.disabled))
+            query = db.users.select().where(where)
+            ret = yield from conn.execute(query)
+            user = yield from ret.fetchone()
+            if user is not None:
+                user_id = user[0]
+                is_superuser = user[3]
+                if is_superuser:
                     return True
+
+                query = db.permissions.select().where(db.permissions.c.user_id == user_id)
+                ret = yield from conn.execute(query)
+                result = yield from ret.fetchall()
+                if ret is not None:
+                    for record in result:
+                        if record.perm_name == permission:
+                            return True
+
             return False
