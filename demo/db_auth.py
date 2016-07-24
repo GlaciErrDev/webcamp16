@@ -40,11 +40,13 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
                 if is_superuser:
                     return True
 
-                query = db.permissions.select().where(db.permissions.c.user_id == user_id)
+                where = db.permissions.c.user_id == user_id
+                query = db.permissions.select().where(where)
                 ret = yield from conn.execute(query)
                 result = yield from ret.fetchall()
                 if ret is not None:
                     for record in result:
+                        print(record)
                         if record.perm_name == permission:
                             return True
 
