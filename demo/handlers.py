@@ -38,7 +38,7 @@ class Web(object):
 <a href="/logout">Logout</a>
 </body>
 """
-    # @require('public')
+    
     async def index(self, request):
         session = await get_session(request)
         print('This is session', session)
