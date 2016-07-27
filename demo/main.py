@@ -1,35 +1,60 @@
 import asyncio
+import pathlib
+
+import jinja2
+import aiohttp_admin
 
 from aiohttp import web
 from aiohttp_session import setup as setup_session
 from aiohttp_session.redis_storage import RedisStorage
 from aiohttp_security import setup as setup_security
 from aiohttp_security import SessionIdentityPolicy
+from aiohttp_debugtoolbar import setup as setup_debugtoolbar
+from aiohttp_jinja2 import setup as setup_jinja2
+from aiohttp_admin.backends.sa import PGResource
 from aiopg.sa import create_engine
 from aioredis import create_pool
 
 from demo.db_auth import DBAuthorizationPolicy
-from demo.handlers import Web
-from demo import settings
+from demo.handlers import AuthHandlers, ViewsHandlers
+from demo import db, settings
+
+
+PROJ_ROOT = pathlib.Path(__file__).parent
 
 
 async def init(loop):
     redis_pool = await create_pool(('localhost', 6379))
-    dbengine = await create_engine(user=settings.DB_USER,
-                                   password=settings.DB_PASSWORD,
-                                   database=settings.DATABASE,
-                                   host=settings.DB_HOST)
+    db_engine = await create_engine(user=settings.DB_USER,
+                                    password=settings.DB_PASSWORD,
+                                    database=settings.DATABASE,
+                                    host=settings.DB_HOST)
     app = web.Application(loop=loop)
+    app['engine'] = db_engine
+    setup_debugtoolbar(app)
     setup_session(app, RedisStorage(redis_pool))
     setup_security(app,
                    SessionIdentityPolicy(),
-                   DBAuthorizationPolicy(dbengine))
+                   DBAuthorizationPolicy(db_engine))
+    setup_jinja2(app, loader=jinja2.FileSystemLoader('demo/templates'))
 
-    web_handlers = Web()
-    web_handlers.configure(app)
-
+    auth_handlers = AuthHandlers()
+    auth_handlers.configure(app)
+    if settings.DEBUG:
+        app.router.add_static('/static', path=str(PROJ_ROOT / 'static'))
+    view_handlers = ViewsHandlers()
+    view_handlers.configure(app)
+    admin_config = str(PROJ_ROOT / 'static' / 'js')
+    setup_admin(app, db_engine, admin_config)
     return app
 
+
+def setup_admin(app, pg_engine, admin_config_path):
+    admin = aiohttp_admin.setup(app, admin_config_path)
+
+    admin.add_resource(PGResource(pg_engine, db.users, url='users'))
+    admin.add_resource(PGResource(pg_engine, db.permissions, url='permissions'))
+    return admin
 
 # todo (misha): add finilizer
 async def finalize(srv, app, handler):
