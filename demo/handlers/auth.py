@@ -1,8 +1,10 @@
+import time
 import functools
 
 from aiohttp import web
 
 from aiohttp_security import remember, forget, authorized_userid, permits
+from aiohttp_session import get_session
 
 
 def require(permission):
@@ -18,7 +20,7 @@ def require(permission):
     return wrapper
 
 
-class Web(object):
+class AuthHandlers(object):
     index_template = """
 <!doctype html>
 <head>
@@ -47,13 +49,13 @@ class Web(object):
         return response
 
     async def login(self, request):
-        response = web.Response(body=b'This is index page')
+        response = web.HTTPFound('/')
         form = await request.post()
         login = form.get('login')
         password = form.get('password')
         # here you can check for correct user/password combination
         await remember(request, response, login)
-        return web.HTTPFound('/')
+        return response
 
     @require('public')
     async def logout(self, request):
@@ -72,11 +74,20 @@ class Web(object):
         response = web.Response(body=b'You are on protected page')
         return response
 
+    async def set_session_info(self, request):
+        session = await get_session(request)
+        if session.get('last_visit'):
+            remote_ip, _ = request.transport.get_extra_info('peername')
+            print('Returning visitor from %s' % remote_ip)
+        session['last_visit'] = time.time()
+        return web.Response(body=b'OK')
+
     def configure(self, app):
         router = app.router
         router.add_route('GET', '/', self.index, name='index')
         router.add_route('POST', '/login', self.login, name='login')
         router.add_route('GET', '/logout', self.logout, name='logout')
+        router.add_route('GET', '/visit', self.set_session_info, name='visit')
         router.add_route('GET', '/public', self.internal_page, name='public')
         router.add_route('GET', '/protected', self.protected_page,
                          name='protected')
