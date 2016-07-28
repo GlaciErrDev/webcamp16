@@ -25,7 +25,7 @@ db:
 	@echo Fill DATABASE
 	@DHOST=$(DHOST) $(VIRTUAL_ENV)/bin/python db.py
 
-WRK = wrk -d20s -c200 -t10 --timeout 10s -s scripts/cvs-report.lua
+WRK = wrk -d20s -c200 -t10 --timeout 10s -s scripts/csv-report.lua
 bench: $(VIRTUAL_ENV)
 	@rm -f $(CURDIR)/results.csv
 
