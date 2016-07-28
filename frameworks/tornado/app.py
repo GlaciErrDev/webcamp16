@@ -1,13 +1,18 @@
 import os
-
-HOST = os.environ.get('DHOST', '127.0.0.1')
-
 import signal
 import logging
 
 from tornado import web, gen, httpclient, httpserver, ioloop, template
+from sqlalchemy import create_engine, schema, Column
+from sqlalchemy.sql.expression import func
+from sqlalchemy.types import Integer, String
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+
+HOST = os.environ.get('DHOST', '127.0.0.1')
 
 
 class JSONHandler(web.RequestHandler):
@@ -25,13 +30,6 @@ class RemoteHandler(web.RequestHandler):
 
 
 root = os.path.dirname(os.path.abspath(__file__))
-
-
-from sqlalchemy import create_engine, schema, Column
-from sqlalchemy.sql.expression import func
-from sqlalchemy.types import Integer, String
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 
 dsn = 'postgres://frameworksbench:frameworksbench@%s:5432/frameworksbench' % HOST
 engine = create_engine(dsn, pool_size=10)

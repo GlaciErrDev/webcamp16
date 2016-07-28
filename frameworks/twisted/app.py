@@ -3,10 +3,11 @@ import os
 import sys
 
 import treq
+
 from alchimia import TWISTED_STRATEGY
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
+from sqlalchemy.sql.expression import func
 from twisted.internet import reactor
-from twisted.application import service, internet
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
 from twisted.web.resource import Resource
 from twisted.web.server import Site, NOT_DONE_YET
@@ -99,11 +100,10 @@ class CompleteResource(Resource):
 
     def render_GET(self, request):
 
-        d = execute(messages.select())
+        d = execute(messages.select().order_by(func.random()).limit(100))
 
         def _(results):
             allResults = []
-            results.sort(key=lambda r: r.content)
             for r in results:
                 allResults.append((str(r.id), r.content))
             return allResults
@@ -113,6 +113,7 @@ class CompleteResource(Resource):
         d.addCallback(lambda _: request.finish())
 
         return NOT_DONE_YET
+
 
 baseResource = Resource()
 baseResource.putChild(b'json', JSONResource())
@@ -125,9 +126,3 @@ webFactory = Site(baseResource)
 if __name__ == '__main__':
     reactor.listenTCP(5000, webFactory)
     reactor.run()
-else:
-    # import pdb; pdb.set_trace()
-    tcp_service = internet.TCPServer(5000, webFactory)
-
-    application = service.Application("Python benchmark")
-    tcp_service.setServiceParent(application)
