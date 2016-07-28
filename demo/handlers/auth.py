@@ -39,6 +39,7 @@ class AuthHandlers(object):
 """
 
     async def index(self, request):
+        print('Accessing index')
         username = await authorized_userid(request)
         if username:
             template = self.index_template.format(

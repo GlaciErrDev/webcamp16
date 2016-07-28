@@ -33,7 +33,8 @@ from sqlalchemy.types import Integer, String
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('postgres://benchmark:benchmark@%s:5432/benchmark' % HOST, pool_size=10)
+dsn = 'postgres://frameworksbench:frameworksbench@%s:5432/frameworksbench' % HOST
+engine = create_engine(dsn, pool_size=10)
 metadata = schema.MetaData()
 Base = declarative_base(metadata=metadata)
 Session = sessionmaker(bind=engine)
@@ -91,13 +92,10 @@ if __name__ == '__main__':
 
     server = httpserver.HTTPServer(app)
     server.bind(5000, "0.0.0.0")
-    server.start(2)
+    server.start()
 
     signal.signal(signal.SIGTERM, sig_handler)
     signal.signal(signal.SIGINT, sig_handler)
 
     loop = ioloop.IOLoop.instance()
     loop.start()
-
-
-# pylama:ignore=E402

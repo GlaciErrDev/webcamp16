@@ -29,10 +29,9 @@ def execute(arg, returnsData=True, fetchAll=True):
     return d
 
 
-connectionString = 'postgres://benchmark:benchmark@%s:5432/benchmark' % HOST
+dsn = 'postgres://frameworksbench:frameworksbench@%s:5432/frameworksbench' % HOST
 
-engine = create_engine(
-    connectionString, reactor=reactor, strategy=TWISTED_STRATEGY)
+engine = create_engine(dsn, reactor=reactor, strategy=TWISTED_STRATEGY)
 
 metadata = MetaData()
 
@@ -41,8 +40,6 @@ messages = Table(
     Column("id", Integer, primary_key=True),
     Column("content", String)
 )
-
-baseResource = Resource()
 
 
 class JSONResource(Resource):
@@ -117,13 +114,20 @@ class CompleteResource(Resource):
 
         return NOT_DONE_YET
 
+baseResource = Resource()
 baseResource.putChild(b'json', JSONResource())
 baseResource.putChild(b'remote', RemoteResource())
 baseResource.putChild(b'complete', CompleteResource())
 
 webFactory = Site(baseResource)
-import ipdb; ipdb.set_trace()  # XXX BREAKPOINT
-tcp_service = internet.TCPServer(5000, webFactory)
 
-application = service.Application("Python benchmark")
-tcp_service.setServiceParent(application)
+
+if __name__ == '__main__':
+    reactor.listenTCP(5000, webFactory)
+    reactor.run()
+else:
+    # import pdb; pdb.set_trace()
+    tcp_service = internet.TCPServer(5000, webFactory)
+
+    application = service.Application("Python benchmark")
+    tcp_service.setServiceParent(application)

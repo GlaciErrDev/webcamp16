@@ -9,6 +9,11 @@ reqs:
 	@touch $(CURDIR)/frameworks
 	@touch $(VIRTUAL_ENV)
 
+.PHONY: docker
+docker:
+	# Building docker images
+	docker build -t bench:0.1 $(CURDIR)
+
 .PHONY: lab
 lab:
 	@echo Start docker container
@@ -23,74 +28,21 @@ db:
 WRK = wrk -d20s -c200 -t10 --timeout 10s -s scripts/cvs-report.lua
 bench: $(VIRTUAL_ENV)
 	@rm -f $(CURDIR)/results.csv
+
 	# aiohttp
 	@make aiohttp OPTS="-p pid -D -w 2"
 	@sleep 2
 	@make wrk TESTEE=aiohttp
 	@kill `cat $(CURDIR)/pid`
 	@sleep 3
-	# bottle
-	@make bottle OPTS="-p pid -D -w 2"
-	@sleep 2
-	@make wrk TESTEE=bottle
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
-	# django
-	@make django OPTS="-p pid -D -w 2"
-	@sleep 2
-	@make wrk TESTEE=django
-	@kill `cat $(CURDIR)/pid`
-	@sleep 4
-	# falcon
-	@make falcon OPTS="-p pid -D -w 2"
-	@sleep 2
-	@make wrk TESTEE=falcon
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
-	# flask
-	@make flask OPTS="-p pid -D -w 2"
-	@sleep 2
-	@TESTEE=flask $(WRK) http://127.0.0.1:5000/json
-	@TESTEE=flask $(WRK) http://127.0.0.1:5000/remote
-	@TESTEE=flask $(WRK) http://127.0.0.1:5000/complete
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
-	# muffin
-	@make muffin OPTS="--daemon --pid $(CURDIR)/pid --workers 2"
-	@sleep 2
-	@make wrk TESTEE=muffin
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
-	# pyramid
-	@make pyramid OPTS="-p pid -D -w 2"
-	@sleep 2
-	@make wrk TESTEE=pyramid
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
-	# wheezy
-	@make wheezy OPTS="-p pid -D -w 2"
-	@sleep 2
-	@make wrk TESTEE=wheezy
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
+
 	# tornado
 	@make tornado OPTS="-p pid -D -w 2"
 	@sleep 2
 	@make wrk TESTEE=tornado
 	@kill `cat $(CURDIR)/pid`
 	@sleep 3
-	# weppy
-	@make weppy OPTS="-p pid -D -w 2"
-	@sleep 2
-	@make wrk TESTEE=weppy
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
-	# wsgi
-	@make wsgi OPTS="-p pid -D -w 2"
-	@sleep 2
-	@make wrk TESTEE=wsgi
-	@kill `cat $(CURDIR)/pid`
-	@sleep 3
+
 	# twisted
 	# @make twisted OPTS="-pid &"
 	# @sleep 1
@@ -107,15 +59,21 @@ wrk:
 	TESTEE=$(TESTEE) $(WRK) http://127.0.0.1:5000/complete
 
 OPTS = 
-aiohttp: $(VIRTUAL_ENV)
+aiohttp-gunicorn: $(VIRTUAL_ENV)
 	@DHOST=$(DHOST) $(VIRTUAL_ENV)/bin/gunicorn app:app $(OPTS) \
 	    -k aiohttp.worker.GunicornWebWorker --bind=127.0.0.1:5000 \
 	    --chdir=$(CURDIR)/frameworks/aiohttp
 
-tornado:
+tornado-gunicorn:
 	@DHOST=$(DHOST) $(VIRTUAL_ENV)/bin/gunicorn app:app $(OPTS) \
 	    --worker-class=gunicorn.workers.gtornado.TornadoWorker --bind=127.0.0.1:5000 \
 	    --chdir=$(CURDIR)/frameworks/tornado
+
+aiohttp:
+	@DHOST=$(DHOST) $(VIRTUAL_ENV)/bin/python $(CURDIR)/frameworks/aiohttp/app.py
+
+tornado:
+	@DHOST=$(DHOST) $(VIRTUAL_ENV)/bin/python $(CURDIR)/frameworks/tornado/app.py
 
 twisted:
 	@DHOST=$(DHOST) $(VIRTUAL_ENV)/bin/python $(CURDIR)/frameworks/twisted/app.py

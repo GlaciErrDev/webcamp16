@@ -2,9 +2,9 @@
 # `/sbin/setuser memcache` runs the given command as the user `memcache`.
 # If you omit that part, the command will be run as root.
 
-POSTGRESQL_USER=${POSTGRESQL_USER:-"benchmark"}
-POSTGRESQL_PASS=${POSTGRESQL_PASS:-"benchmark"}
-POSTGRESQL_DB=${POSTGRESQL_DB:-"benchmark"}
+POSTGRESQL_USER=${POSTGRESQL_USER:-"frameworksbench"}
+POSTGRESQL_PASS=${POSTGRESQL_PASS:-"frameworksbench"}
+POSTGRESQL_DB=${POSTGRESQL_DB:-"frameworksbench"}
 POSTGRESQL_TEMPLATE=${POSTGRESQL_TEMPLATE:-"DEFAULT"}
 
 POSTGRESQL_BIN=/usr/lib/postgresql/9.3/bin/postgres
